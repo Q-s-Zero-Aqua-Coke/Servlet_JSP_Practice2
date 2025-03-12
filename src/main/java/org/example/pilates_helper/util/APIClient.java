@@ -11,39 +11,40 @@ import java.net.http.HttpResponse;
 import java.util.logging.Logger;
 
 public interface APIClient {
-    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-    HttpClient httpClient = HttpClient.newHttpClient();
-
-    public default String callAPI(APIClientParam param)  {
-        HttpResponse<String> response = null;
-        try {
-            response = httpClient.send(buildRequest(param), HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-
-        info("%d".formatted(response.statusCode()));
-        return response.body();
-    }
-
-    private HttpRequest buildRequest(APIClientParam param) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(param.url()))
-                .method(param.method(), HttpRequest.BodyPublishers.ofString(param.body()))
-                .headers(param.headers())
-                .build();
-    }
 
     private Logger getLogger() {
         return Logger.getLogger(this.getClass().getName());
     }
 
-    private void info(String message) {
+    private void info(String message)  {
         getLogger().info(message);
     }
 
-    private void error(String message) {
+    private void error(String message)  {
         getLogger().severe(message);
+    }
+
+    default String callAPI(APIClientParam param)  {
+        try {
+            HttpResponse<String> response = httpClient.send(buildRequest(param), HttpResponse.BodyHandlers.ofString());
+            info("%d".formatted(response.statusCode()));
+            return response.body();
+        } catch (Exception e) {
+            error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    HttpClient httpClient = HttpClient.newHttpClient();
+
+    Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+
+    private HttpRequest buildRequest(APIClientParam param) {
+
+        return HttpRequest.newBuilder()
+                .uri(URI.create(param.url()))
+                .method(param.method(), HttpRequest.BodyPublishers.ofString(param.body()))
+                .headers(param.headers())
+                .build();
     }
 }
